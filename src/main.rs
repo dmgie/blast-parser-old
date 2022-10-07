@@ -73,6 +73,7 @@ impl Query {
         self.num_hits = num_hits;
         self.sig_aligns = sig_aligns;
     }
+
     fn print(&self) {
         println!("Query: {} with {} alignments", self.name, self.num_hits);
         println!("Number of significant alignments: {}", self.num_hits);
@@ -179,13 +180,17 @@ fn signif_parse() -> Result<(), Box<dyn error::Error>> {
         }
     }
 
-    statistics(only_unqiues(all_queries));
+    let stats = get_statistics(get_uniques(all_queries));
+
+    // Get query with highest score
+    get_highest_scoring_queries(stats);
 
     Ok(())
 }
+
 /// From a list of all hits which can contain many queries with the same name (due to the layout)
 /// of the experiment, filter them to only contain query name once
-fn only_unqiues(all_queries: Vec<Query>) -> Vec<Query> {
+fn get_uniques(all_queries: Vec<Query>) -> Vec<Query> {
     let mut unique_hits: Vec<Query> = Vec::new();
     let mut unique_names: HashSet<String> = HashSet::new();
     for hit in all_queries {
@@ -197,7 +202,8 @@ fn only_unqiues(all_queries: Vec<Query>) -> Vec<Query> {
     unique_hits
 }
 
-fn statistics(all_queries: Vec<Query>) {
+/// Get statistics for each query
+fn get_statistics(all_queries: Vec<Query>) -> Vec<QueryStats> {
     // Given a vector of queries find (per query):
     // 1. Highest score
     // 2. Lowest score
@@ -246,7 +252,32 @@ fn statistics(all_queries: Vec<Query>) {
             num_signif,
         });
     }
-    for i in query_stats {
-        println!("{}", i);
-    }
+    // for i in &query_stats {
+    //     println!("{}", i);
+    // }
+    // println!("{}", &query_stats.len());
+    query_stats
+}
+
+fn get_highest_scoring_queries(query_stats: Vec<QueryStats>) -> Vec<String> {
+    let mut highest_score = 0.0;
+    query_stats.iter().for_each(|x| {
+        if x.highest_score > highest_score {
+            highest_score = x.highest_score;
+        }
+    });
+
+    // Check if there are multiple queries with the same highest score
+    let mut highest_score_queries: Vec<String> = Vec::new();
+    query_stats.iter().for_each(|x| {
+        if x.highest_score == highest_score {
+            highest_score_queries.push(x.query.clone());
+        }
+    });
+
+    println!(
+        "Query {:?}, with score {}",
+        highest_score_queries, highest_score
+    );
+    highest_score_queries
 }

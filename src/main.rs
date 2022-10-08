@@ -34,13 +34,43 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     reader.read_to_string(&mut content)?;
 
     let queries = &get_queries(content)[1..];
-    // println!("{}", queries[0]);
+
+    let mut processed: Vec<SigAl> = Vec::new();
     for i in queries {
-        process(i.clone());
+        for a in process(i.clone()) {
+            processed.push(a)
+        }
     }
+
+    // sort processed by score
+    processed.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+
+    // Only keep 2 from each query
+    let filtered: Vec<SigAl> = keep_top(processed, 1);
+
+    for i in filtered {
+        println!("{:?}", i.info);
+    }
+
     // process(queries[0].clone());
 
     Ok(())
+}
+
+/// How many significant alignments from each query do we keep
+fn keep_top(to_filter: Vec<SigAl>, keep_num: i32) -> Vec<SigAl> {
+    let mut filtered: Vec<SigAl> = Vec::new();
+    for i in to_filter {
+        if filtered
+            .iter()
+            .filter(|a| a.origin.name == i.origin.name)
+            .count()
+            < keep_num as usize
+        {
+            filtered.push(i)
+        }
+    }
+    filtered
 }
 
 fn get_queries(content: String) -> Vec<String> {
@@ -52,9 +82,9 @@ fn get_queries(content: String) -> Vec<String> {
     split_by_query
 }
 
+// TODO: Make function more modular
 fn process(query: String) -> Vec<SigAl> {
     let mut seq_al_processed: Vec<SigAl> = Vec::new();
-    // let mut query_processed: Vec<Query> = Vec::new();
 
     // 2 Step process, split by >
     // Get the first part, and extract query information from it
@@ -66,7 +96,6 @@ fn process(query: String) -> Vec<SigAl> {
     let mut query_info = Query {
         name: "".to_string(),
         length: 0,
-        // hits: Vec::new(), // NOTE: Maybe not include this?
     };
     // Header, since that is the first element when splitting by '>'
     query_info.name = alignments[0].split_whitespace().collect::<Vec<&str>>()[0].to_string();
@@ -92,7 +121,7 @@ fn process(query: String) -> Vec<SigAl> {
             score: 0.0,
             e_value: 0.0,
             length: 0,
-            origin: query_info.clone(), // NOTE: Keep query info here, or keep sigal in query struct?
+            origin: query_info.clone(), // NOTE: Keep query info here, or keep SigAl in query struct?
         };
 
         // Info / header
@@ -132,15 +161,9 @@ fn process(query: String) -> Vec<SigAl> {
                         .unwrap();
                 }
             });
-
-        // println!("{}, {}", sig_struct.info, sig_struct.length);
-        // println!("{}", full_content);
-        // query_info.hits.push(sig_struct.clone()); // NOTE: Same as above, keep here or other
-        println!("{:?}", &sig_struct);
+        // println!("{:?}", &sig_struct);
         seq_al_processed.push(sig_struct);
     }
 
-    // query_processed.push(query_info);
-    // (seq_al_processed, query_processed)
     seq_al_processed
 }

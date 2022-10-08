@@ -4,5 +4,19 @@ This is a relatively simple BLAST output parser, mainly to alleviate having to w
 
 This helps to process some information that is needed (or rather is nice to have) for `dmgie/IntergeneIdentifier`. 
 
+# Running the program
+The program takes a single file as input and can either be run via
+
+``` shell
+cargo run <file here>
+```
+
+OR
+
+``` shell
+./blast-output-parser <file here>
+```
+
+
 # Improvements
 This could be improved to make plots or various other things that have not been planned yet.

@@ -1,1 +1,4 @@
 /target
+**/values/*
+/src/.RData
+/src/.Rhistory

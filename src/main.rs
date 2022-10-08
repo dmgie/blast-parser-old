@@ -63,9 +63,10 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     processed.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
 
     // Only keep 2 from each query
-    let filtered: Vec<SigAl> = keep_top(processed, 1);
+    //let filtered: Vec<SigAl> = keep_top(processed, 1);
 
-    for i in filtered {
+    // for i in filtered {
+    for i in processed {
         println!("{}", i);
     }
 
@@ -127,16 +128,11 @@ fn process(query: &str) -> Vec<SigAl> {
     //
     // Get the second part by looping through the lines of those things
     let alignments: Vec<String> = query.split('>').map(|x| x.to_string()).collect();
+
+    // Getting the Query Header and length info from first entry (header of the file)
     let query_info: Query = process_header(&alignments[0]);
 
-    // Getting the Query Header and length info
-
-    ///////////////////////////
-    ///////////////////////////
-    ///////////////////////////
-
     // Process all significant alignments within one query
-
     let signif_iter = alignments[1..].iter();
     for full_content in signif_iter {
         let mut sig_struct = SigAl {

@@ -3,6 +3,7 @@
 use std::{
     env::args,
     error,
+    fmt::Display,
     fs::File,
     io::{BufReader, Read},
 };
@@ -17,6 +18,12 @@ struct Query {
     // hits: Vec<SigAl>,
 }
 
+impl Display for Query {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "[{} of length {} ]", self.name, self.length)
+    }
+}
+
 #[derive(Debug, Clone)]
 struct SigAl {
     info: String,
@@ -24,6 +31,16 @@ struct SigAl {
     e_value: f64,
     length: i64,
     origin: Query,
+}
+
+impl Display for SigAl {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "{}\n\t Name: {}\n\t Length: {}\n\t Score: {}\n\t E-value: {}\n------------------------",
+            self.origin, self.info, self.length, self.score, self.e_value
+        )
+    }
 }
 
 fn main() -> Result<(), Box<dyn error::Error>> {
@@ -37,7 +54,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 
     let mut processed: Vec<SigAl> = Vec::new();
     for i in queries {
-        for a in process(i.clone()) {
+        for a in process(i) {
             processed.push(a)
         }
     }
@@ -49,10 +66,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let filtered: Vec<SigAl> = keep_top(processed, 1);
 
     for i in filtered {
-        println!("{:?}", i.info);
+        println!("{}", i);
     }
-
-    // process(queries[0].clone());
 
     Ok(())
 }
@@ -73,6 +88,9 @@ fn keep_top(to_filter: Vec<SigAl>, keep_num: i32) -> Vec<SigAl> {
     filtered
 }
 
+/// Given the entire content of a file, return a vector containing Strings, where each element
+/// is the output of an entire query. This is done by splitting at the "Query= " which is specific
+/// to each input query.
 fn get_queries(content: String) -> Vec<String> {
     // Split by Query=, and return them as a vector
     let split_by_query: Vec<String> = content
@@ -82,8 +100,26 @@ fn get_queries(content: String) -> Vec<String> {
     split_by_query
 }
 
+fn process_header(query: &str) -> Query {
+    let mut query_info = Query {
+        name: "".to_string(),
+        length: 0,
+    };
+    // Header, since that is the first element when splitting by '>'
+    query_info.name = query.split_whitespace().collect::<Vec<&str>>()[0].to_string();
+    // Length
+    for i in query.lines() {
+        if i.starts_with("Length=") {
+            query_info.length = i.split('=').collect::<Vec<&str>>()[1]
+                .parse::<i64>()
+                .unwrap();
+        }
+    }
+    query_info
+}
+
 // TODO: Make function more modular
-fn process(query: String) -> Vec<SigAl> {
+fn process(query: &str) -> Vec<SigAl> {
     let mut seq_al_processed: Vec<SigAl> = Vec::new();
 
     // 2 Step process, split by >
@@ -91,22 +127,9 @@ fn process(query: String) -> Vec<SigAl> {
     //
     // Get the second part by looping through the lines of those things
     let alignments: Vec<String> = query.split('>').map(|x| x.to_string()).collect();
+    let query_info: Query = process_header(&alignments[0]);
 
     // Getting the Query Header and length info
-    let mut query_info = Query {
-        name: "".to_string(),
-        length: 0,
-    };
-    // Header, since that is the first element when splitting by '>'
-    query_info.name = alignments[0].split_whitespace().collect::<Vec<&str>>()[0].to_string();
-    // Length
-    for i in alignments[0].lines() {
-        if i.starts_with("Length=") {
-            query_info.length = i.split('=').collect::<Vec<&str>>()[1]
-                .parse::<i64>()
-                .unwrap();
-        }
-    }
 
     ///////////////////////////
     ///////////////////////////
@@ -124,7 +147,7 @@ fn process(query: String) -> Vec<SigAl> {
             origin: query_info.clone(), // NOTE: Keep query info here, or keep SigAl in query struct?
         };
 
-        // Info / header
+        // Info / header i.e before first length=
         sig_struct.info = full_content
             .lines()
             .take_while(|x| !x.starts_with("Length"))

@@ -15,7 +15,6 @@ use std::{
 struct Query {
     name: String,
     length: i64,
-    // hits: Vec<SigAl>,
 }
 
 impl Display for Query {
@@ -31,6 +30,15 @@ struct SigAl {
     e_value: f64,
     length: i64,
     origin: Query,
+}
+
+impl SigAl {
+    fn print(&self) {
+        println!(
+            "{},{},{},{},{}",
+            self.origin, self.info, self.length, self.score, self.e_value
+        )
+    }
 }
 
 impl Display for SigAl {
@@ -67,7 +75,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 
     // for i in filtered {
     for i in processed {
-        println!("{}", i);
+        // println!("{}", i);
+        i.print()
     }
 
     Ok(())

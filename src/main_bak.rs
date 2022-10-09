@@ -7,9 +7,12 @@ use std::{
     io::{BufRead, BufReader},
 };
 
+
 // TODO: Fix it so it shows the sequence with the highest score
 // TODO: Get a certain number of top scoring i.e I want the 5 highest scoring ones
 //       Could just sort and then index
+
+
 
 #[derive(Clone)]
 struct QueryStats {
@@ -321,6 +324,9 @@ fn get_top_queries(query_stats: &[QueryStats], score_or_evalue: &str) -> Vec<Que
     let mut highest_score = 0.0;
     let mut lowest_e_val = f64::MAX;
     let mut highest_score_queries: Vec<QueryStats> = Vec::new();
+
+
+    
 
     match score_or_evalue {
         "score" => {

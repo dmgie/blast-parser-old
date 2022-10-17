@@ -25,6 +25,8 @@ This could be improved to make plots or various other things that have not been 
 
 Currently, it can either pretty print or print it out csv-like if you change the source code (the `i.print()` line near the end of the `main` function). 
 
+Maybe use `serde` / `csv` crates to output a CSV file rather than doing it manually? 
+
 Alternatively, could also implemented a CLI switch that either makes it csv-like of pretty prints it.
 
 The advantages of CSV is to be able to parse it as a person might want in another program
